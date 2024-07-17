@@ -1,13 +1,20 @@
 import streamlit as st
 import ee
+import geemap
 import folium
 from streamlit_folium import folium_static
 from datetime import datetime, timedelta
 import json
 
-# Autenticação e inicialização do Google Earth Engine
-ee.Authenticate()
-ee.Initialize(project='ee-marceloclaro')
+# Função para autenticação e inicialização do Google Earth Engine
+@st.cache_data(persist=True)
+def autenticar_gee(token_name="EARTHENGINE_TOKEN"):
+    try:
+        geemap.ee_initialize(token_name=token_name)
+    except Exception as e:
+        st.error(f"Erro ao autenticar o Google Earth Engine: {e}")
+
+autenticar_gee()
 
 # Função para carregar arquivos GeoJSON e extrair a geometria
 def carregar_geojson(upload_files):
