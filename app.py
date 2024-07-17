@@ -1,8 +1,6 @@
 import streamlit as st
 import ee
-import geemap
 import folium
-from folium import WmsTileLayer
 from streamlit_folium import folium_static
 from datetime import datetime, timedelta
 import json
@@ -28,13 +26,12 @@ st.markdown(
 </style>
 """, unsafe_allow_html=True)
 
-@st.cache_data(persist=True)
-def ee_authenticate(token):
-    try:
-        geemap.ee_initialize(token=token)
-        st.success("Autenticado com sucesso!")
-    except Exception as e:
-        st.error(f"Erro ao autenticar com o Google Earth Engine: {e}")
+def ee_authenticate():
+    # Trigger the authentication flow.
+    ee.Authenticate()
+
+    # Initialize the library.
+    ee.Initialize(project='your-project-id')  # Replace with your project ID
 
 def add_ee_layer(self, ee_image_object, vis_params, name):
     map_id_dict = ee.Image(ee_image_object).getMapId(vis_params)
@@ -159,14 +156,15 @@ def realizar_estatisticas_avancadas(clustered_ndvi):
     return resultados
 
 def main():
+    st.sidebar.title("Autenticação do Google Earth Engine")
+    st.sidebar.write("Por favor, autentique-se com sua conta do Google para acessar o Google Earth Engine.")
+    if st.sidebar.button("Autenticar"):
+        ee_authenticate()
+        st.sidebar.success("Autenticação bem-sucedida!")
+
     with st.sidebar:
         st.title("Aplicativo Visualizador NDVI")
         st.image("https://cdn-icons-png.flaticon.com/512/2516/2516640.png", width=90)
-        st.subheader("Autenticação do Google Earth Engine")
-        token = st.text_input("Cole seu token do GEE aqui:")
-        if st.button("Autenticar"):
-            ee_authenticate(token)
-
         st.subheader("Navegação:")
         st.markdown("""
             - [Mapa NDVI](#visualizador-ndvi)
