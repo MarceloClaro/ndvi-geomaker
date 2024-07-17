@@ -3,5 +3,5 @@ streamlit
 streamlit-folium
 folium
 geemap
-sklearn
+scikit-learn
 scipy
