@@ -6,6 +6,12 @@ from folium import WmsTileLayer
 from streamlit_folium import folium_static
 from datetime import datetime, timedelta
 import json
+import matplotlib.pyplot as plt
+import numpy as np
+from sklearn.cluster import KMeans, AgglomerativeClustering, DBSCAN
+from scipy import stats
+import pandas as pd
+import seaborn as sns
 
 st.set_page_config(
     page_title="Visualizador NDVI",
@@ -142,12 +148,10 @@ st.markdown(
 </style>
 """, unsafe_allow_html=True)
 
-# Inicializando a biblioteca Earth Engine
 @st.cache_data(persist=True)
 def ee_authenticate(token_name="EARTHENGINE_TOKEN"):
     geemap.ee_initialize(token_name=token_name)
 
-# Configuração do método de desenho do Earth Engine
 def add_ee_layer(self, ee_image_object, vis_params, name):
     map_id_dict = ee.Image(ee_image_object).getMapId(vis_params)
     layer = folium.raster_layers.TileLayer(
@@ -160,24 +164,19 @@ def add_ee_layer(self, ee_image_object, vis_params, name):
     layer.add_to(self)
     return layer
 
-# Configurando o método de renderização do Earth Engine no Folium
 folium.Map.add_ee_layer = add_ee_layer
 
-# Definindo uma função para criar e filtrar uma coleção de imagens do GEE para resultados
 def satCollection(cloudRate, initialDate, updatedDate, aoi):
     collection = ee.ImageCollection('COPERNICUS/S2_SR') \
         .filter(ee.Filter.lt("CLOUDY_PIXEL_PERCENTAGE", cloudRate)) \
         .filterDate(initialDate, updatedDate) \
         .filterBounds(aoi)
     
-    # Definindo uma função para recortar a coleção para a área de interesse
     def clipCollection(image):
         return image.clip(aoi).divide(10000)
-    # recortando a coleção
     collection = collection.map(clipCollection)
     return collection
 
-# Função de upload
 last_uploaded_centroid = None
 def upload_files_proc(upload_files):
     global last_uploaded_centroid
@@ -208,7 +207,6 @@ def upload_files_proc(upload_files):
 
     return geometry_aoi
 
-# Função de processamento de entrada de data
 def date_input_proc(input_date, time_range):
     end_date = input_date
     start_date = input_date - timedelta(days=time_range)
@@ -217,28 +215,83 @@ def date_input_proc(input_date, time_range):
     str_end_date = end_date.strftime('%Y-%m-%d')
     return str_start_date, str_end_date
 
-# Função principal para executar o aplicativo Streamlit
+def cluster_ndvi(ndvi_array, algorithm, n_clusters=5):
+    if algorithm == 'KMeans':
+        model = KMeans(n_clusters=n_clusters, random_state=0)
+    elif algorithm == 'AgglomerativeClustering':
+        model = AgglomerativeClustering(n_clusters=n_clusters)
+    elif algorithm == 'DBSCAN':
+        model = DBSCAN(eps=0.1, min_samples=5)
+    
+    clustered = model.fit_predict(ndvi_array)
+    return clustered
+
+def plot_cluster_results(clustered_ndvi, ndvi_palette, n_clusters, area_units='m^2'):
+    unique, counts = np.unique(clustered_ndvi, return_counts=True)
+    areas = counts * 10 * 10  # Cada pixel corresponde a 10x10 metros (100 m^2)
+
+    if area_units == 'km^2':
+        areas = areas / 1e6
+
+    fig, ax = plt.subplots(1, 2, figsize=(15, 5))
+    
+    # Gráfico de Pizza
+    ax[0].pie(areas, labels=[f'Cluster {i+1}' for i in range(n_clusters)], autopct='%1.1f%%', colors=ndvi_palette[:n_clusters])
+    ax[0].set_title(f'Porcentagem de Áreas de Clusters (em {area_units})')
+    
+    # Histograma
+    sns.histplot(clustered_ndvi, bins=n_clusters, ax=ax[1], kde=True)
+    ax[1].set_title('Distribuição dos Clusters')
+    ax[1].set_xlabel('Clusters')
+    ax[1].set_ylabel('Frequência')
+
+    return fig
+
+def realizar_estatisticas_avancadas(clustered_ndvi):
+    # ANOVA
+    tercios = np.array_split(clustered_ndvi, 3)
+    f_val, p_val = stats.f_oneway(tercios[0], tercios[1], tercios[2])
+
+    # Q-Exponential
+    def q_exponencial(valores, q):
+        return (1 - (1 - q) * valores)**(1 / (1 - q))
+
+    q_valor = 1.5
+    valores_q_exponencial = q_exponencial(clustered_ndvi, q_valor)
+
+    # Estatística Q
+    def q_estatistica(valores, q):
+        return np.sum((valores_q_exponencial - np.mean(valores_q_exponencial))**2) / len(valores_q_exponencial)
+
+    valores_q_estatistica = q_estatistica(clustered_ndvi, q_valor)
+
+    resultados = {
+        "F-valor ANOVA": f_val,
+        "p-valor ANOVA": p_val,
+        "Valores Q-Exponencial": valores_q_exponencial,
+        "Valores Q-Estatística": valores_q_estatistica,
+    }
+
+    return resultados
+
 def main():
     ee_authenticate(token_name="EARTHENGINE_TOKEN")
 
-    # Barra lateral
     with st.sidebar:
         st.title("Aplicativo Visualizador NDVI")
         st.image("https://cdn-icons-png.flaticon.com/512/2516/2516640.png", width=90)
         st.subheader("Navegação:")
-        st.markdown(
-            """
-                - [Mapa NDVI](#visualizador-ndvi)
-                - [Legenda do Mapa](#map-legend)
-                - [Fluxo de trabalho do processo](#process-workflow-aoi-date-range-and-classification)
-                - [Interpretando os Resultados](#interpreting-the-results)
-                - [Índice Ambiental](#using-an-environmental-index-ndvi)
-                - [Dados](#data-sentinel-2-imagery-and-l2a-product)
-                - [Contribuição](#contribute-to-the-app)
-                - [Sobre](#about)
-                - [Crédito](#credit)
-            """)
-        
+        st.markdown("""
+            - [Mapa NDVI](#visualizador-ndvi)
+            - [Legenda do Mapa](#map-legend)
+            - [Fluxo de trabalho do processo](#process-workflow-aoi-date-range-and-classification)
+            - [Interpretando os Resultados](#interpreting-the-results)
+            - [Índice Ambiental](#using-an-environmental-index-ndvi)
+            - [Dados](#data-sentinel-2-imagery-and-l2a-product)
+            - [Contribuição](#contribute-to-the-app)
+            - [Sobre](#about)
+            - [Crédito](#credit)
+        """)
         st.subheader("Contato:")
         st.markdown("""
             [![Instagram](https://cdn-icons-png.flaticon.com/512/2111/2111463.png)](https://www.instagram.com/marceloclaro.geomaker/)
@@ -249,21 +302,19 @@ def main():
     with st.container():
         st.title("Visualizador NDVI")
         st.markdown("**Monitore a saúde da vegetação visualizando e comparando valores de NDVI ao longo do tempo e da localização com imagens de satélite Sentinel-2 em tempo real!**")
-    
-    # colunas para entrada - mapa
+
     with st.form("input_form"):
         c1, c2 = st.columns([3, 1])
-        #### Seção de entrada do usuário - INÍCIO
         
         with st.container():
             with c2:
                 st.info("Cobertura de Nuvens 🌥️")
-                cloud_pixel_percentage = st.slider(label="taxa de pixel de nuvem", min_value=5, max_value=100, step=5, value=85 , label_visibility="collapsed")
+                cloud_pixel_percentage = st.slider(label="taxa de pixel de nuvem", min_value=5, max_value=100, step=5, value=85, label_visibility="collapsed")
 
                 st.info("Carregar arquivo de área de interesse:")
                 upload_files = st.file_uploader("Crie um arquivo GeoJSON em: [geojson.io](https://geojson.io/)", accept_multiple_files=True)
                 geometry_aoi = upload_files_proc(upload_files)
-            
+                
                 st.info("Paletas de Cores Personalizadas")
                 accessibility = st.selectbox("Acessibilidade: Paletas amigáveis para daltônicos", ["Normal", "Deuteranopia", "Protanopia", "Tritanopia", "Acromatopsia"])
 
@@ -285,6 +336,12 @@ def main():
                 elif accessibility == "Acromatopsia":
                     ndvi_palette = ["#407de0", "#2763da", "#394388", "#272c66", "#16194f", "#010034"]
                     reclassified_ndvi_palette = ["#004f3d", "#338796", "#66a4f5", "#3683ff", "#3d50ca", "#421c7f", "#290058"]
+
+                st.info("Escolha o Algoritmo de Clusterização")
+                clustering_algorithm = st.selectbox("Algoritmo", ["KMeans", "AgglomerativeClustering", "DBSCAN"])
+
+                st.info("Unidades de Área")
+                area_units = st.selectbox("Unidades", ["m^2", "km^2"])
 
         with st.container():
             with c1:
@@ -379,28 +436,47 @@ def main():
             else:
                 m.add_ee_layer(initial_tci_image, tci_params, f'Imagem de Satélite Inicial: {initial_date}')
                 m.add_ee_layer(updated_tci_image, tci_params, f'Imagem de Satélite Atualizada: {updated_date}')
-
                 m.add_ee_layer(initial_ndvi, ndvi_params, f'NDVI Bruto Inicial: {initial_date}')
                 m.add_ee_layer(updated_ndvi, ndvi_params, f'NDVI Bruto Atualizado: {updated_date}')
-
                 m.add_ee_layer(initial_ndvi_classified, ndvi_classified_params, f'NDVI Reclassificado Inicial: {initial_date}')
                 m.add_ee_layer(updated_ndvi_classified, ndvi_classified_params, f'NDVI Reclassificado Atualizado: {updated_date}')
 
             folium.LayerControl(collapsed=True).add_to(m)
-
+        
         submitted = c2.form_submit_button("Gerar mapa")
         if submitted:
             with c1:
                 folium_static(m)
+                
+                initial_ndvi_np = np.array(initial_ndvi.getInfo()['bands'][0]['data'])
+                updated_ndvi_np = np.array(updated_ndvi.getInfo()['bands'][0]['data'])
+
+                initial_ndvi_clustered = cluster_ndvi(initial_ndvi_np, clustering_algorithm)
+                updated_ndvi_clustered = cluster_ndvi(updated_ndvi_np, clustering_algorithm)
+
+                st.subheader("Resultados de Clusterização - Data Inicial")
+                fig_initial = plot_cluster_results(initial_ndvi_clustered, ndvi_palette, n_clusters=5, area_units=area_units)
+                st.pyplot(fig_initial)
+
+                st.subheader("Resultados de Clusterização - Data Atualizada")
+                fig_updated = plot_cluster_results(updated_ndvi_clustered, ndvi_palette, n_clusters=5, area_units=area_units)
+                st.pyplot(fig_updated)
+
+                st.subheader("Estatísticas Avançadas - Data Inicial")
+                resultados_iniciais = realizar_estatisticas_avancadas(initial_ndvi_clustered)
+                st.json(resultados_iniciais)
+
+                st.subheader("Estatísticas Avançadas - Data Atualizada")
+                resultados_atualizados = realizar_estatisticas_avancadas(updated_ndvi_clustered)
+                st.json(resultados_atualizados)
         else:
             with c1:
                 folium_static(m)
 
     with st.container():
         st.subheader("Legenda do Mapa:")
-        col3, col4, col5 = st.columns([1,2,1])
-
-        with col3:            
+        col3, col4, col5 = st.columns([1, 2, 1])
+        with col3:
             ndvi_legend_html = """
                 <div class="ndvilegend">
                     <h5>NDVI Bruto</h5>
@@ -414,8 +490,7 @@ def main():
                 </div>
             """.format(*ndvi_palette)
             st.markdown(ndvi_legend_html, unsafe_allow_html=True)
-
-        with col4:            
+        with col4:
             reclassified_ndvi_legend_html = """
                 <div class="reclassifiedndvi">
                     <h5>Classes de NDVI</h5>
@@ -480,6 +555,7 @@ def main():
                   
         O projeto está listado sob o rótulo **Hacktoberfest** para aqueles entusiastas do [Hacktoberfest](https://hacktoberfest.com/)! Como a recompensa por contribuir com 4 PRs é ter uma árvore plantada em seu nome através do [TreeNation](https://tree-nation.com/), vejo que se encaixa no tema deste projeto.
     """)
+
     st.markdown("""
         #### Maneiras de Contribuir
 
