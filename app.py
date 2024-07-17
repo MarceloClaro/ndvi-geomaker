@@ -14,39 +14,45 @@ import pandas as pd
 import seaborn as sns
 
 st.set_page_config(
-    page_title="Visualizador NDVI",
+    page_title="NDVI Viewer",
     page_icon="https://cdn-icons-png.flaticon.com/512/2516/2516640.png",
     layout="wide",
     initial_sidebar_state="expanded",
     menu_items={
-        'Obter ajuda': "https://github.com/IndigoWizard/NDVI-Viewer",
-        'Relatar um bug': "https://github.com/IndigoWizard/NDVI-Viewer/issues",
-        'Sobre': "Este aplicativo foi desenvolvido por [IndigoWizard](https://github.com/IndigoWizard/NDVI-Viewer) para fins de monitoramento ambiental e análise geoespacial"
+        'Get help': "https://github.com/IndigoWizard/NDVI-Viewer",
+        'Report a bug': "https://github.com/IndigoWizard/NDVI-Viewer/issues",
+        'About': "This app was developed by [IndigoWizard](https://github.com/IndigoWizard/NDVI-Viewer) for the purpose of environmental monitoring and geospatial analysis"
     }
 )
 
 st.markdown(
 """
 <style>
-    /* Estilo da página */
-    .st-emotion-cache-1avcm0n{
+    /* Header */
+    .st-emotion-cache-1avcm0n {
         height: 1rem;
     }
+    /* Smooth scrolling */
     .main {
         scroll-behavior: smooth;
     }
+    /* main app body with less padding */
     .st-emotion-cache-z5fcl4 {
         padding-block: 0;
     }
+    /* Sidebar */
     .st-emotion-cache-10oheav {
         padding: 0 1rem;
     }
+    /* Sidebar: inside container */
     .css-ge7e53 {
         width: fit-content;
     }
+    /* Sidebar: image */
     .css-1kyxreq {
         display: block !important;
     }
+    /* Sidebar: Navigation list */
     div.element-container:nth-child(4) > div:nth-child(1) > div:nth-child(1) > ul:nth-child(1) {
         margin: 0;
         padding: 0;
@@ -69,11 +75,14 @@ st.markdown(
         background: #131720;
         border-radius: 4px;
     }
+    /* Sidebar: socials */
     div.css-rklnmr:nth-child(6) > div:nth-child(1) > div:nth-child(1) > p {
         display: flex;
         flex-direction: row;
         gap: 1rem;
     }
+    /* Upload info box */
+    /* Upload button: dark theme */
     .st-emotion-cache-1erivf3 {
         display: flex;
         flex-direction: column;
@@ -85,6 +94,7 @@ st.markdown(
         flex-direction: row;
         margin-inline: 0;
     }
+    /* Upload button: light theme */
     .st-emotion-cache-1gulkj5 {
         display: flex;
         flex-direction: column;
@@ -96,6 +106,7 @@ st.markdown(
         flex-direction: row;
         margin-inline: 0;
     }
+    /* Legend style */
     .ndvilegend {
         transition: 0.2s ease-in-out;
         border-radius: 5px;
@@ -120,6 +131,7 @@ st.markdown(
         background: rgba(0, 0, 0, 0.12);
         cursor: pointer;
     }
+    /* Form submit button: generate map */
     button.st-emotion-cache-19rxjzo:nth-child(1) {
         width: 100%;
     }
@@ -246,7 +258,7 @@ def realizar_estatisticas_avancadas(clustered_ndvi):
     resultados = {
         "F-valor ANOVA": f_val,
         "p-valor ANOVA": p_val,
-        "Valores Q-Exponencial": valores_q_exponencial.tolist(),  # Converting to list for JSON serialization
+        "Valores Q-Exponencial": valores_q_exponencial.tolist(),  # Convertendo para lista para serialização JSON
         "Valores Q-Estatística": valores_q_estatistica,
     }
 
