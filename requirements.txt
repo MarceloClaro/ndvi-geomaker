@@ -1,8 +1,11 @@
-﻿earthengine-api
 streamlit
-streamlit-folium
-folium
+earthengine-api
 geemap
+folium
+streamlit-folium
+numpy
 scikit-learn
 scipy
+pandas
 seaborn
+matplotlib
