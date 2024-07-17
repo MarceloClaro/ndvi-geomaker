@@ -7,17 +7,7 @@ from streamlit_folium import folium_static
 from datetime import datetime, timedelta
 import json
 
-st.set_page_config(
-    page_title="Visualizador NDVI",
-    page_icon="https://cdn-icons-png.flaticon.com/512/2516/2516640.png",
-    layout="wide",
-    initial_sidebar_state="expanded",
-    menu_items={
-    'Obter ajuda': "https://github.com/IndigoWizard/NDVI-Viewer",
-    'Relatar um bug': "https://github.com/IndigoWizard/NDVI-Viewer/issues",
-    'Sobre': "Este aplicativo foi desenvolvido por [IndigoWizard](https://github.com/IndigoWizard/NDVI-Viewer) para fins de monitoramento ambiental e análise geoespacial"
-    }
-)
+
 
 st.markdown(
 """
