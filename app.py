@@ -147,7 +147,7 @@ st.markdown(
 #ee.Initialize()
 # geemap auth + initialization for cloud deployment
 @st.cache_data(persist=True)
-def ee_authenticate(token_name="EARTHENGINE_TOKEN"):
+def ee_authenticate(token_name='ee-marceloclaro'):
     geemap.ee_initialize(token_name=token_name)
 
 # Earth Engine drawing method setup
