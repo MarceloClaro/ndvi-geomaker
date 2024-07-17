@@ -330,7 +330,7 @@ def main():
 
             folium.LayerControl(collapsed=True).add_to(m)
         
-        submitted = c2.form_submit_button("Gerar mapa")
+        submitted = st.form_submit_button("Gerar mapa")
         if submitted:
             with c1:
                 folium_static(m)
