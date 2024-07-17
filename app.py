@@ -1,4 +1,3 @@
-
 import streamlit as st
 import ee
 import geemap
@@ -8,9 +7,8 @@ from streamlit_folium import folium_static
 from datetime import datetime, timedelta
 import json
 
-# Autenticação e inicialização do Google Earth Engine
-ee.Authenticate()
-ee.Initialize(project='ee-marceloclaro')
+# Initialize the library
+ee.Initialize()
 
 st.markdown(
 """
