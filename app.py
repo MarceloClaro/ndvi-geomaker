@@ -13,9 +13,9 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded",
     menu_items={
-    'Obter ajuda': "https://github.com/IndigoWizard/NDVI-Viewer",
-    'Relatar um bug': "https://github.com/IndigoWizard/NDVI-Viewer/issues",
-    'Sobre': "Este aplicativo foi desenvolvido por [IndigoWizard](https://github.com/IndigoWizard/NDVI-Viewer) para fins de monitoramento ambiental e análise geoespacial"
+        'Obter ajuda': "https://github.com/IndigoWizard/NDVI-Viewer",
+        'Relatar um bug': "https://github.com/IndigoWizard/NDVI-Viewer/issues",
+        'Sobre': "Este aplicativo foi desenvolvido por [IndigoWizard](https://github.com/IndigoWizard/NDVI-Viewer) para fins de monitoramento ambiental e análise geoespacial"
     }
 )
 
@@ -143,9 +143,6 @@ st.markdown(
 """, unsafe_allow_html=True)
 
 # Inicializando a biblioteca Earth Engine
-# Use ee.Initialize() apenas na máquina local! Comente antes da implantação (Inutilizável na implantação > use a inicialização+autenticação do geemap abaixo)
-#ee.Initialize()
-# autenticação e inicialização do geemap para implantação em nuvem
 @st.cache_data(persist=True)
 def ee_authenticate(token_name="EARTHENGINE_TOKEN"):
     geemap.ee_initialize(token_name=token_name)
@@ -181,12 +178,9 @@ def satCollection(cloudRate, initialDate, updatedDate, aoi):
     return collection
 
 # Função de upload
-# Defina uma variável global para armazenar o centróide da última geometria carregada
 last_uploaded_centroid = None
 def upload_files_proc(upload_files):
-    # Uma variável global para rastrear o último geojson carregado
     global last_uploaded_centroid
-    # Configurando uma variável que recebe todos os polígonos/geometrias dentro do mesmo/diferentes geojson
     geometry_aoi_list = []
 
     for upload_file in upload_files:
@@ -194,13 +188,10 @@ def upload_files_proc(upload_files):
         geojson_data = json.loads(bytes_data)
 
         if 'features' in geojson_data and isinstance(geojson_data['features'], list):
-            # Lidar com arquivos GeoJSON com uma lista 'features'
             features = geojson_data['features']
         elif 'geometries' in geojson_data and isinstance(geojson_data['geometries'], list):
-            # Lidar com arquivos GeoJSON com uma lista 'geometries'
             features = [{'geometry': geo} for geo in geojson_data['geometries']]
         else:
-            # lidando com casos de formato de arquivo inesperado ou falta de 'features' ou 'geometries'
             continue
 
         for feature in features:
@@ -208,8 +199,6 @@ def upload_files_proc(upload_files):
                 coordinates = feature['geometry']['coordinates']
                 geometry = ee.Geometry.Polygon(coordinates) if feature['geometry']['type'] == 'Polygon' else ee.Geometry.MultiPolygon(coordinates)
                 geometry_aoi_list.append(geometry)
-
-                # Atualizar o centróide carregado mais recentemente
                 last_uploaded_centroid = geometry.centroid(maxError=1).getInfo()['coordinates']
 
     if geometry_aoi_list:
@@ -218,7 +207,6 @@ def upload_files_proc(upload_files):
         geometry_aoi = ee.Geometry.Point([27.98, 36.13])
 
     return geometry_aoi
-
 
 # Função de processamento de entrada de data
 def date_input_proc(input_date, time_range):
@@ -231,10 +219,9 @@ def date_input_proc(input_date, time_range):
 
 # Função principal para executar o aplicativo Streamlit
 def main():
-    # iniciar gee 
     ee_authenticate(token_name="EARTHENGINE_TOKEN")
 
-    # barra lateral
+    # Barra lateral
     with st.sidebar:
         st.title("Aplicativo Visualizador NDVI")
         st.image("https://cdn-icons-png.flaticon.com/512/2516/2516640.png", width=90)
@@ -251,11 +238,13 @@ def main():
                 - [Sobre](#about)
                 - [Crédito](#credit)
             """)
-    
+        
         st.subheader("Contato:")
-        st.markdown("[![LinkedIn](https://static.licdn.com/sc/h/8s162nmbcnfkg7a0k8nq9wwqo)](https://linkedin.com/in/ahmed-islem-mokhtari) [![GitHub](https://github.githubassets.com/favicons/favicon-dark.png)](https://github.com/IndigoWizard) [![Medium](https://miro.medium.com/1*m-R_BkNf1Qjr1YbyOIJY2w.png)](https://medium.com/@Indigo.Wizard/mt-chenoua-forest-fires-analysis-with-remote-sensing-614681f468e9)")
-
-        st.caption("ʕ •ᴥ•ʔ Estrela⭐o [projeto no GitHub](https://github.com/IndigoWizard/NDVI-Viewer/)!")
+        st.markdown("""
+            [![Instagram](https://cdn-icons-png.flaticon.com/512/2111/2111463.png)](https://www.instagram.com/marceloclaro.geomaker/)
+            Projeto Geomaker + IA
+            - Professor: Marcelo Claro.
+        """)
 
     with st.container():
         st.title("Visualizador NDVI")
@@ -268,26 +257,19 @@ def main():
         
         with st.container():
             with c2:
-            ## Entrada de cobertura de nuvens
                 st.info("Cobertura de Nuvens 🌥️")
                 cloud_pixel_percentage = st.slider(label="taxa de pixel de nuvem", min_value=5, max_value=100, step=5, value=85 , label_visibility="collapsed")
 
-            ## Upload de arquivo
-                # Arquivo GeoJSON de interesse do usuário
                 st.info("Carregar arquivo de área de interesse:")
                 upload_files = st.file_uploader("Crie um arquivo GeoJSON em: [geojson.io](https://geojson.io/)", accept_multiple_files=True)
-                # chamando a função de upload de arquivos
                 geometry_aoi = upload_files_proc(upload_files)
             
-            ## Acessibilidade: entrada da paleta de cores
                 st.info("Paletas de Cores Personalizadas")
                 accessibility = st.selectbox("Acessibilidade: Paletas amigáveis para daltônicos", ["Normal", "Deuteranopia", "Protanopia", "Tritanopia", "Acromatopsia"])
 
-                # Definir paletas de cores padrão: usadas em camadas de mapa e legenda de mapa
                 default_ndvi_palette = ["#ffffe5", "#f7fcb9", "#78c679", "#41ab5d", "#238443", "#005a32"]
                 default_reclassified_ndvi_palette = ["#a50026","#ed5e3d","#f9f7ae","#f4ff78","#9ed569","#229b51","#006837"]
                 
-                # uma cópia das cores padrão que podem ser reafetadas
                 ndvi_palette = default_ndvi_palette.copy() 
                 reclassified_ndvi_palette = default_reclassified_ndvi_palette.copy()
 
@@ -305,104 +287,71 @@ def main():
                     reclassified_ndvi_palette = ["#004f3d", "#338796", "#66a4f5", "#3683ff", "#3d50ca", "#421c7f", "#290058"]
 
         with st.container():
-            ## Entrada de intervalo de tempo
             with c1:
                 col1, col2 = st.columns(2)
-                
-                # Criando um atraso de 2 dias para o placeholder de entrada de data para garantir que haja imagens de satélite no conjunto de dados no início do aplicativo
                 today = datetime.today()
                 delay = today - timedelta(days=2)
 
-                # Widgets de entrada de data
                 col1.warning("Data inicial do NDVI 📅")
                 initial_date = col1.date_input("inicial", value=delay, label_visibility="collapsed")
 
                 col2.success("Data de atualização do NDVI 📅")
                 updated_date = col2.date_input("atualizada", value=delay, label_visibility="collapsed")
 
-                # Configurando a variável de intervalo de tempo para uma coleção de imagens
                 time_range = 7
-                # Processar data inicial
                 str_initial_start_date, str_initial_end_date = date_input_proc(initial_date, time_range)
-
-                # Processar data atualizada
                 str_updated_start_date, str_updated_end_date = date_input_proc(updated_date, time_range)
     
-    #### Seção de entrada do usuário - FIM
-
-            #### Seção do Mapa - INÍCIO
             global last_uploaded_centroid
 
-            # Crie o mapa inicial
             if last_uploaded_centroid is not None:
                 latitude = last_uploaded_centroid[1]
                 longitude = last_uploaded_centroid[0]
                 m = folium.Map(location=[latitude, longitude], tiles=None, zoom_start=12, control_scale=True)
             else:
-                # Local padrão se nenhum arquivo for carregado
                 m = folium.Map(location=[36.45, 10.85], tiles=None, zoom_start=4, control_scale=True)
 
-
-            ### BASEMAPS - INÍCIO
-            ## Mapas base primários
-            # OSM
             b0 = folium.TileLayer('Open Street Map', name="Open Street Map")
             b0.add_to(m)
-            # Mapa base CartoDB Dark Matter
             b1 = folium.TileLayer('cartodbdark_matter', name='Mapa Escuro')
             b1.add_to(m)
 
-            #### Seção de processamento de imagens de satélite - INÍCIO
-            ## Definindo e recortando coleções de imagens para ambas as datas:
-            # Coleção de Imagem inicial
             initial_collection = satCollection(cloud_pixel_percentage, str_initial_start_date, str_initial_end_date, geometry_aoi)
-            # Coleção de Imagem atualizada
             updated_collection = satCollection(cloud_pixel_percentage, str_updated_start_date, str_updated_end_date, geometry_aoi)
 
-            # definindo uma variável sat_imagery que pode ser usada para vários processos posteriormente (tci, ndvi... etc)
             initial_sat_imagery = initial_collection.median()
             updated_sat_imagery = updated_collection.median()
 
-            ## TCI (Imagem em cores reais)
-            # Recortando a imagem para a área de interesse "aoi"
             initial_tci_image = initial_sat_imagery
             updated_tci_image = updated_sat_imagery
 
-            # Parâmetros visuais da imagem TCI
             tci_params = {
-            'bands': ['B4', 'B3', 'B2'], # usando bandas Vermelha, Verde e Azul para TCI.
+            'bands': ['B4', 'B3', 'B2'],
             'min': 0,
             'max': 1,
             'gamma': 1
             }
 
-            ## Outras operações de processamento de imagens vão aqui 
-            # NDVI
             def getNDVI(collection):
                 return collection.normalizedDifference(['B8', 'B4'])
 
-            # recortando para AOI
             initial_ndvi = getNDVI(initial_sat_imagery)
             updated_ndvi = getNDVI(updated_sat_imagery)
 
-            # Parâmetros visuais do NDVI:
             ndvi_params = {
             'min': 0,
             'max': 1,
             'palette': ndvi_palette
             }
 
-            # Mascarando o NDVI sobre a água e mostrando apenas a terra
             def satImageMask(sat_image):
                 masked_image = sat_image.updateMask(sat_image.gte(0))
                 return masked_image
             
-            # Máscara de imagens NDVI
             initial_ndvi = satImageMask(initial_ndvi)
             updated_ndvi = satImageMask(updated_ndvi)
 
-            # ##### Classificação do NDVI: 7 classes
-            def classify_ndvi(masked_image): # melhor usar uma imagem mascarada para evitar corpos d'água obstruindo o resultado, tanto quanto possível
+            def classify_ndvi(masked_image):
                 ndvi_classified = ee.Image(masked_image) \
                 .where(masked_image.gte(0).And(masked_image.lt(0.15)), 1) \
                 .where(masked_image.gte(0.15).And(masked_image.lt(0.25)), 2) \
@@ -410,53 +359,35 @@ def main():
                 .where(masked_image.gte(0.35).And(masked_image.lt(0.45)), 4) \
                 .where(masked_image.gte(0.45).And(masked_image.lt(0.65)), 5) \
                 .where(masked_image.gte(0.65).And(masked_image.lt(0.75)), 6) \
-                .where(masked_image.gte(0.75), 7) \
+                .where(masked_image.gte(0.75), 7)
                 
                 return ndvi_classified
 
-            # Classificar NDVI mascarado
             initial_ndvi_classified = classify_ndvi(initial_ndvi)
             updated_ndvi_classified = classify_ndvi(updated_ndvi)
 
-            # Parâmetros visuais do NDVI classificado
             ndvi_classified_params = {
             'min': 1,
             'max': 7,
             'palette': reclassified_ndvi_palette
-            # cada cor corresponde a uma classe de NDVI.
             }
 
-            #### Seção de processamento de imagens de satélite - FIM
-
-            #### Seção de camadas - INÍCIO
-            # Verifique se as datas inicial e atualizada são as mesmas
             if initial_date == updated_date:
-                # Exibir apenas as camadas com base na data atualizada sem datas em seus nomes
                 m.add_ee_layer(updated_tci_image, tci_params, 'Imagem de Satélite')
                 m.add_ee_layer(updated_ndvi, ndvi_params, 'NDVI Bruto')
                 m.add_ee_layer(updated_ndvi_classified, ndvi_classified_params, 'NDVI Reclassificado')
             else:
-                # Mostrar ambas as datas nas camadas apropriadas
-                # Imagem de satélite
                 m.add_ee_layer(initial_tci_image, tci_params, f'Imagem de Satélite Inicial: {initial_date}')
                 m.add_ee_layer(updated_tci_image, tci_params, f'Imagem de Satélite Atualizada: {updated_date}')
 
-                # NDVI
                 m.add_ee_layer(initial_ndvi, ndvi_params, f'NDVI Bruto Inicial: {initial_date}')
                 m.add_ee_layer(updated_ndvi, ndvi_params, f'NDVI Bruto Atualizado: {updated_date}')
 
-                # Adicionar camadas ao segundo mapa (m.m2)
-                # NDVI classificado
                 m.add_ee_layer(initial_ndvi_classified, ndvi_classified_params, f'NDVI Reclassificado Inicial: {initial_date}')
                 m.add_ee_layer(updated_ndvi_classified, ndvi_classified_params, f'NDVI Reclassificado Atualizado: {updated_date}')
 
-
-            #### Seção de camadas - FIM
-
-            #### Exibição de resultado do mapa - INÍCIO
-            # Controle de Camada de Mapa do Folium: podemos ver e interagir com as camadas do mapa
             folium.LayerControl(collapsed=True).add_to(m)
-            # Exibir o mapa
+
         submitted = c2.form_submit_button("Gerar mapa")
         if submitted:
             with c1:
@@ -465,15 +396,11 @@ def main():
             with c1:
                 folium_static(m)
 
-    #### Exibição de resultado do mapa - FIM
-
-    #### Legenda - INÍCIO
     with st.container():
         st.subheader("Legenda do Mapa:")
         col3, col4, col5 = st.columns([1,2,1])
 
         with col3:            
-            # Criar uma legenda HTML para classes NDVI
             ndvi_legend_html = """
                 <div class="ndvilegend">
                     <h5>NDVI Bruto</h5>
@@ -486,12 +413,9 @@ def main():
                     </div>
                 </div>
             """.format(*ndvi_palette)
-
-            # Exibir a legenda do NDVI usando st.markdown
             st.markdown(ndvi_legend_html, unsafe_allow_html=True)
 
         with col4:            
-            # Criar uma legenda HTML para classes NDVI
             reclassified_ndvi_legend_html = """
                 <div class="reclassifiedndvi">
                     <h5>Classes de NDVI</h5>
@@ -506,16 +430,10 @@ def main():
                     </ul>
                 </div>
             """.format(*reclassified_ndvi_palette)
-
-            # Exibir a legenda do NDVI Reclassificado usando st.markdown
             st.markdown(reclassified_ndvi_legend_html, unsafe_allow_html=True)
 
-    #### Legenda - FIM
-
-    #### Informações Diversas - INÍCIO
     st.subheader("Informações")
 
-    ## Como Funciona
     st.write("#### Fluxo de trabalho do processo: AOI, Intervalo de Datas e Classificação")
     st.write("Este aplicativo fornece uma interface simples para explorar mudanças no NDVI ao longo do tempo para uma Área de Interesse (AOI) especificada. Veja como funciona:")
 
@@ -529,7 +447,6 @@ def main():
     st.write("Este aplicativo foi projetado para fornecer uma ferramenta acessível para usuários técnicos e não técnicos explorarem e interpretarem mudanças na saúde e densidade da vegetação.")
     st.write("Lembre-se de que, embora o mapa de NDVI seja uma ferramenta valiosa, sua interpretação requer a consideração de vários fatores. Divirta-se explorando o mundo da saúde e densidade da vegetação!")
 
-    ## Interpretação dos Resultados
     st.write("#### Interpretando os Resultados")
     st.write("Ao explorar o mapa de NDVI, lembre-se de que:")
 
@@ -540,7 +457,6 @@ def main():
 
     st.write("Compreender esses fatores ajudará você a interpretar os resultados de forma mais eficaz. Este aplicativo visa fornecer a você um auxílio visual informativo para análise da vegetação.")
 
-    ## Índice Ambiental/NDVI
     st.write("#### Usando um Índice Ambiental - NDVI:")
     st.write("O [Índice de Vegetação da Diferença Normalizada (NDVI)](https://eos.com/make-an-analysis/ndvi/) é um índice ambiental essencial que fornece insights sobre a saúde e densidade da vegetação. É amplamente utilizado em sensoriamento remoto e análise geoespacial para monitorar mudanças na cobertura do solo, crescimento da vegetação e condições ambientais.")
 
@@ -551,16 +467,11 @@ def main():
 
     st.write("Os valores de NDVI variam de **[-1** a **1]**, com valores mais altos indicando vegetação mais densa e saudável. Valores mais baixos representam superfícies não vegetadas, como corpos d'água, solo nu ou áreas construídas.")
 
-    ## Dados
     st.write("#### Dados: Imagens Sentinel-2 e Produto L2A")
     st.write("Este aplicativo utiliza **imagens de refletância de superfície corrigidas atmosfericamente do Sentinel-2 Nível 2A**. A [constelação de satélites Sentinel-2](https://sentinels.copernicus.eu/web/sentinel/user-guides/sentinel-2-msi/applications) consiste em satélites gêmeos (Sentinel-2A e Sentinel-2B) que capturam imagens multiespectrais de alta resolução da superfície da Terra.")
 
     st.write("Os produtos de [Nível 2A](https://sentinels.copernicus.eu/web/sentinel/user-guides/sentinel-2-msi/product-types/level-2a) passaram por correção atmosférica, melhorando a precisão dos valores de refletância da superfície. Essas imagens são adequadas para várias análises de cobertura do solo e vegetação, incluindo cálculos de NDVI.")
 
-
-    #### Informações Diversas - FIM
-
-    #### Contribuição - INÍCIO
     st.header("Contribua para o App")
     con1, con2 = st.columns(2)
     con1.image("https://www.pixenli.com/image/SoL3iZMG")
@@ -568,7 +479,7 @@ def main():
         Contribuições são bem-vindas da comunidade para ajudar a melhorar este aplicativo! Se você está interessado em corrigir bugs 🐞, implementar uma nova funcionalidade 🌟 ou melhorar a experiência do usuário 🪄, suas contribuições são valiosas.
                   
         O projeto está listado sob o rótulo **Hacktoberfest** para aqueles entusiastas do [Hacktoberfest](https://hacktoberfest.com/)! Como a recompensa por contribuir com 4 PRs é ter uma árvore plantada em seu nome através do [TreeNation](https://tree-nation.com/), vejo que se encaixa no tema deste projeto.
-        """)
+    """)
     st.markdown("""
         #### Maneiras de Contribuir
 
@@ -579,24 +490,16 @@ def main():
         - **Contribuições de Código**: Se você está confortável com a codificação, pode contribuir enviando pull requests contra a branch `dev` do [repositório do projeto no GitHub](https://github.com/IndigoWizard/NDVI-Viewer/).
     """)
 
-    #### Contribuição - FIM
-
-    #### Sobre o App - INÍCIO
     st.subheader("Sobre:")
-    st.markdown("Este projeto foi desenvolvido inicialmente por mim ([IndigoWizard](https://github.com/IndigoWizard)) e [Emmarie-Ahtunan](https://github.com/Emmarie-Ahtunan) como uma submissão para o **Desafio de Dados Ambientais** do [Global Hack Week: Data](https://ghw.mlh.io/) por [Major League Hacking](https://mlh.io/).<br> Continuei desenvolvendo o projeto base para torná-lo um aplicativo completo em funcionalidades. Confira o repositório do projeto no GitHub aqui: [IndigoWizard/NDVI-Viewer](https://github.com/IndigoWizard/NDVI-Viewer)",  unsafe_allow_html=True)
+    st.markdown("Este projeto foi desenvolvido inicialmente por [IndigoWizard](https://github.com/IndigoWizard) e [Emmarie-Ahtunan](https://github.com/Emmarie-Ahtunan) como uma submissão para o **Desafio de Dados Ambientais** do [Global Hack Week: Data](https://ghw.mlh.io/) por [Major League Hacking](https://mlh.io/).<br> Continuei desenvolvendo o projeto base para torná-lo um aplicativo completo em funcionalidades. Confira o repositório do projeto no GitHub aqui: [IndigoWizard/NDVI-Viewer](https://github.com/IndigoWizard/NDVI-Viewer)",  unsafe_allow_html=True)
     st.image("https://www.pixenli.com/image/Hn1xkB-6")
-    #### Sobre o App - FIM
 
-    #### Crédito - INÍCIO
     st.subheader("Crédito:")
     st.markdown("""O app foi desenvolvido por [IndigoWizard](https://github.com/IndigoWizard) usando: [Streamlit](https://streamlit.io/), [Google Earth Engine](https://github.com/google/earthengine-api) Python API, [geemap](https://github.com/gee-community/geemap), [Folium](https://github.com/python-visualization/folium). Ícones de agricultura criados por <a href="https://www.flaticon.com/free-icons/agriculture" title="ícones de agricultura">dreamicons - Flaticon</a>""", unsafe_allow_html=True)
-    #### Crédito - FIM
-    
-    ##### Estilização personalizada
+
     st.markdown(
     """
     <style>
-        /* iframe do mapa */
         iframe {
             width: 100%;
         }
@@ -607,8 +510,6 @@ def main():
         }
     </style>
     """, unsafe_allow_html=True)
- 
 
-# Executar o app
 if __name__ == "__main__":
     main()
