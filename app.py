@@ -28,35 +28,25 @@ st.set_page_config(
 st.markdown(
 """
 <style>
-    /* Cabeçalho */
+    /* Estilo da página */
     .st-emotion-cache-1avcm0n{
         height: 1rem;
     }
-    /* Rolagem suave */
     .main {
         scroll-behavior: smooth;
     }
-    /* corpo principal do app com menos padding */
     .st-emotion-cache-z5fcl4 {
         padding-block: 0;
     }
-
-    /* Barra lateral */
     .st-emotion-cache-10oheav {
         padding: 0 1rem;
     }
-
-    /* Barra lateral: contêiner interno */
     .css-ge7e53 {
         width: fit-content;
     }
-
-    /* Barra lateral: imagem */
     .css-1kyxreq {
         display: block !important;
     }
-
-    /* Barra lateral: lista de navegação */
     div.element-container:nth-child(4) > div:nth-child(1) > div:nth-child(1) > ul:nth-child(1) {
         margin: 0;
         padding: 0;
@@ -73,23 +63,17 @@ st.markdown(
         transition: 0.2s ease-in-out;
         padding-inline: 10px;
     }
-    
     div.element-container:nth-child(4) > div:nth-child(1) > div:nth-child(1) > ul:nth-child(1) > li > a:hover {
         color: rgb(46, 206, 255);
         transition: 0.2s ease-in-out;
         background: #131720;
         border-radius: 4px;
     }
-    
-    /* Barra lateral: sociais */
     div.css-rklnmr:nth-child(6) > div:nth-child(1) > div:nth-child(1) > p {
         display: flex;
         flex-direction: row;
         gap: 1rem;
     }
-
-    /* Caixa de informações de upload */
-    /* Botão de upload: tema escuro */
     .st-emotion-cache-1erivf3 {
         display: flex;
         flex-direction: column;
@@ -101,21 +85,17 @@ st.markdown(
         flex-direction: row;
         margin-inline: 0;
     }
-    /* Botão de upload: tema claro */
     .st-emotion-cache-1gulkj5 {
         display: flex;
         flex-direction: column;
         align-items: inherit;
         font-size: 14px;
     }
-
     .st-emotion-cache-u8hs99 {
         display: flex;
         flex-direction: row;
         margin-inline: 0;
     }
-    /* Estilo da legenda */
-
     .ndvilegend {
         transition: 0.2s ease-in-out;
         border-radius: 5px;
@@ -140,8 +120,6 @@ st.markdown(
         background: rgba(0, 0, 0, 0.12);
         cursor: pointer;
     }
-    
-    /* Botão de envio de formulário: gerar mapa */
     button.st-emotion-cache-19rxjzo:nth-child(1) {
         width: 100%;
     }
@@ -223,7 +201,7 @@ def cluster_ndvi(ndvi_array, algorithm, n_clusters=5):
     elif algorithm == 'DBSCAN':
         model = DBSCAN(eps=0.1, min_samples=5)
     
-    clustered = model.fit_predict(ndvi_array)
+    clustered = model.fit_predict(ndvi_array.reshape(-1, 1))  # Reshape to match expected input
     return clustered
 
 def plot_cluster_results(clustered_ndvi, ndvi_palette, n_clusters, area_units='m^2'):
@@ -268,7 +246,7 @@ def realizar_estatisticas_avancadas(clustered_ndvi):
     resultados = {
         "F-valor ANOVA": f_val,
         "p-valor ANOVA": p_val,
-        "Valores Q-Exponencial": valores_q_exponencial,
+        "Valores Q-Exponencial": valores_q_exponencial.tolist(),  # Converting to list for JSON serialization
         "Valores Q-Estatística": valores_q_estatistica,
     }
 
@@ -309,7 +287,7 @@ def main():
         with st.container():
             with c2:
                 st.info("Cobertura de Nuvens 🌥️")
-                cloud_pixel_percentage = st.slider(label="taxa de pixel de nuvem", min_value=5, max_value=100, step=5, value=85, label_visibility="collapsed")
+                cloud_pixel_percentage = st.slider(label="Taxa de pixel de nuvem", min_value=5, max_value=100, step=5, value=85, label_visibility="collapsed")
 
                 st.info("Carregar arquivo de área de interesse:")
                 upload_files = st.file_uploader("Crie um arquivo GeoJSON em: [geojson.io](https://geojson.io/)", accept_multiple_files=True)
@@ -383,10 +361,10 @@ def main():
             updated_tci_image = updated_sat_imagery
 
             tci_params = {
-            'bands': ['B4', 'B3', 'B2'],
-            'min': 0,
-            'max': 1,
-            'gamma': 1
+                'bands': ['B4', 'B3', 'B2'],
+                'min': 0,
+                'max': 1,
+                'gamma': 1
             }
 
             def getNDVI(collection):
@@ -396,9 +374,9 @@ def main():
             updated_ndvi = getNDVI(updated_sat_imagery)
 
             ndvi_params = {
-            'min': 0,
-            'max': 1,
-            'palette': ndvi_palette
+                'min': 0,
+                'max': 1,
+                'palette': ndvi_palette
             }
 
             def satImageMask(sat_image):
@@ -410,13 +388,13 @@ def main():
 
             def classify_ndvi(masked_image):
                 ndvi_classified = ee.Image(masked_image) \
-                .where(masked_image.gte(0).And(masked_image.lt(0.15)), 1) \
-                .where(masked_image.gte(0.15).And(masked_image.lt(0.25)), 2) \
-                .where(masked_image.gte(0.25).And(masked_image.lt(0.35)), 3) \
-                .where(masked_image.gte(0.35).And(masked_image.lt(0.45)), 4) \
-                .where(masked_image.gte(0.45).And(masked_image.lt(0.65)), 5) \
-                .where(masked_image.gte(0.65).And(masked_image.lt(0.75)), 6) \
-                .where(masked_image.gte(0.75), 7)
+                    .where(masked_image.gte(0).And(masked_image.lt(0.15)), 1) \
+                    .where(masked_image.gte(0.15).And(masked_image.lt(0.25)), 2) \
+                    .where(masked_image.gte(0.25).And(masked_image.lt(0.35)), 3) \
+                    .where(masked_image.gte(0.35).And(masked_image.lt(0.45)), 4) \
+                    .where(masked_image.gte(0.45).And(masked_image.lt(0.65)), 5) \
+                    .where(masked_image.gte(0.65).And(masked_image.lt(0.75)), 6) \
+                    .where(masked_image.gte(0.75), 7)
                 
                 return ndvi_classified
 
@@ -424,9 +402,9 @@ def main():
             updated_ndvi_classified = classify_ndvi(updated_ndvi)
 
             ndvi_classified_params = {
-            'min': 1,
-            'max': 7,
-            'palette': reclassified_ndvi_palette
+                'min': 1,
+                'max': 7,
+                'palette': reclassified_ndvi_palette
             }
 
             if initial_date == updated_date:
