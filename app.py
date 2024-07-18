@@ -146,9 +146,22 @@ st.markdown(
 # Use ee.Initialize() only on local machine! Comment back before deployement (Unusable on deployment > use geemap init+auth bellow)
 #ee.Initialize()
 # geemap auth + initialization for cloud deployment
+#@st.cache_data(persist=True)
+#def ee_authenticate(token_name="EARTHENGINE_TOKEN"):
+    #geemap.ee_initialize(token_name=token_name)
+# Autenticação e inicialização do Earth Engine
+ee.Authenticate()
+ee.Initialize(project='ee-marceloclaro')
+
 @st.cache_data(persist=True)
-def ee_authenticate(token_name="EARTHENGINE_TOKEN"):
-    geemap.ee_initialize(token_name=token_name)
+def ee_authenticate():
+    # Inicializar geemap com as credenciais já autenticadas
+    geemap.ee_initialize()
+
+# Chamar a função de autenticação
+ee_authenticate()
+
+# Agora você pode usar a API do Earth Engine conforme necessário
 
 # Earth Engine drawing method setup
 def add_ee_layer(self, ee_image_object, vis_params, name):
