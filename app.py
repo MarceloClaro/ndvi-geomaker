@@ -27,7 +27,6 @@ st.markdown(
 """, unsafe_allow_html=True)
 
 # Função de autenticação e inicialização do Earth Engine
-@st.cache_data(persist=True)
 def ee_authenticate():
     try:
         # Tentar autenticar e inicializar o Earth Engine
@@ -116,7 +115,7 @@ def date_input_proc(input_date, time_range):
 
 # Main function to run the Streamlit app
 def main():
-    # initiate gee 
+    # Inicia o Google Earth Engine
     ee_authenticate()
 
     # sidebar
