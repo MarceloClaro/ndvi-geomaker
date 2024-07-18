@@ -150,18 +150,22 @@ st.markdown(
 #def ee_authenticate(token_name="EARTHENGINE_TOKEN"):
     #geemap.ee_initialize(token_name=token_name)
 # Autenticação e inicialização do Earth Engine
-ee.Authenticate()
-ee.Initialize(project='ee-marceloclaro')
-
+#__________________________________________________________
+# Autenticação e inicialização do Earth Engine com geemap para Streamlit
 @st.cache_data(persist=True)
 def ee_authenticate():
-    # Inicializar geemap com as credenciais já autenticadas
-    geemap.ee_initialize()
+    try:
+        # Tente autenticar e inicializar
+        ee.Initialize(project='ee-marceloclaro')
+    except ee.EEException:
+        # Se falhar, utilize geemap para autenticação
+        geemap.ee_initialize()
 
 # Chamar a função de autenticação
 ee_authenticate()
 
 # Agora você pode usar a API do Earth Engine conforme necessário
+#__________________________________________________________
 
 # Earth Engine drawing method setup
 def add_ee_layer(self, ee_image_object, vis_params, name):
