@@ -13,144 +13,19 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded",
     menu_items={
-    'Get help': "https://github.com/IndigoWizard/NDVI-Viewer",
-    'Report a bug': "https://github.com/IndigoWizard/NDVI-Viewer/issues",
-    'About': "This app was developped by [IndigoWizard](https://github.com/IndigoWizard/NDVI-Viewer) for the purpose of environmental monitoring and geospatial analysis"
+        'Get help': "https://github.com/IndigoWizard/NDVI-Viewer",
+        'Report a bug': "https://github.com/IndigoWizard/NDVI-Viewer/issues",
+        'About': "This app was developed by [IndigoWizard](https://github.com/IndigoWizard/NDVI-Viewer) for the purpose of environmental monitoring and geospatial analysis"
     }
 )
 
 st.markdown(
 """
 <style>
-    /* Header*/
-    .st-emotion-cache-1avcm0n{
-        height: 1rem;
-    }
-    /* Smooth scrolling*/
-    .main {
-        scroll-behavior: smooth;
-    }
-    /* main app body with less padding*/
-    .st-emotion-cache-z5fcl4 {
-        padding-block: 0;
-    }
-
-    /*Sidebar*/
-    .st-emotion-cache-10oheav {
-        padding: 0 1rem;
-    }
-
-    /*Sidebar : inside container*/
-    .css-ge7e53 {
-        width: fit-content;
-    }
-
-    /*Sidebar : image*/
-    .css-1kyxreq {
-        display: block !important;
-    }
-
-    /*Sidebar : Navigation list*/
-    div.element-container:nth-child(4) > div:nth-child(1) > div:nth-child(1) > ul:nth-child(1) {
-        margin: 0;
-        padding: 0;
-        list-style: none;
-    }
-    div.element-container:nth-child(4) > div:nth-child(1) > div:nth-child(1) > ul:nth-child(1) > li {
-        padding: 0;
-        margin: 0;
-        padding: 0;
-        font-weight: 600;
-    }
-    div.element-container:nth-child(4) > div:nth-child(1) > div:nth-child(1) > ul:nth-child(1) > li > a {
-        text-decoration: none;
-        transition: 0.2s ease-in-out;
-        padding-inline: 10px;
-    }
-    
-    div.element-container:nth-child(4) > div:nth-child(1) > div:nth-child(1) > ul:nth-child(1) > li > a:hover {
-        color: rgb(46, 206, 255);
-        transition: 0.2s ease-in-out;
-        background: #131720;
-        border-radius: 4px;
-    }
-    
-    /* Sidebar: socials*/
-    div.css-rklnmr:nth-child(6) > div:nth-child(1) > div:nth-child(1) > p {
-        display: flex;
-        flex-direction: row;
-        gap: 1rem;
-    }
-
-    /* Upload info box */
-    /*Upload button: dark theme*/
-    .st-emotion-cache-1erivf3 {
-        display: flex;
-        flex-direction: column;
-        align-items: inherit;
-        font-size: 14px;
-    }
-    .css-u8hs99.eqdbnj014 {
-        display: flex;
-        flex-direction: row;
-        margin-inline: 0;
-    }
-    /*Upload button: light theme*/
-    .st-emotion-cache-1gulkj5 {
-        display: flex;
-        flex-direction: column;
-        align-items: inherit;
-        font-size: 14px;
-    }
-
-    .st-emotion-cache-u8hs99 {
-        display: flex;
-        flex-direction: row;
-        margin-inline: 0;
-    }
-    /*Legend style*/
-
-    .ndvilegend {
-        transition: 0.2s ease-in-out;
-        border-radius: 5px;
-        box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
-        background: rgba(0, 0, 0, 0.05);
-    }
-    .ndvilegend:hover {
-        transition: 0.3s ease-in-out;
-        box-shadow: 0 0 5px rgba(0, 0, 0, 0.8);
-        background: rgba(0, 0, 0, 0.12);
-        cursor: pointer;
-    }
-    .reclassifiedndvi {
-        transition: 0.2s ease-in-out;
-        border-radius: 5px;
-        box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
-        background: rgba(0, 0, 0, 0.05);
-    }
-    .reclassifiedndvi:hover {
-        transition: 0.3s ease-in-out;
-        box-shadow: 0 0 5px rgba(0, 0, 0, 0.8);
-        background: rgba(0, 0, 0, 0.12);
-        cursor: pointer;
-    }
-    
-    /*Form submit button: generate map*/
-    button.st-emotion-cache-19rxjzo:nth-child(1) {
-        width: 100%;
-    }
+    /* Custom CSS styles */
 </style>
 """, unsafe_allow_html=True)
 
-# Initializing the Earth Engine library
-# Use ee.Initialize() only on local machine! Comment back before deployement (Unusable on deployment > use geemap init+auth bellow)
-#ee.Initialize()
-# geemap auth + initialization for cloud deployment
-#@st.cache_data(persist=True)
-#def ee_authenticate(token_name="EARTHENGINE_TOKEN"):
-    #geemap.ee_initialize(token_name=token_name)
-# Autenticação e inicialização do Earth Engine
-#__________________________________________________________
 # Função de autenticação e inicialização do Earth Engine
 @st.cache_data(persist=True)
 def ee_authenticate():
@@ -160,10 +35,6 @@ def ee_authenticate():
     except ee.EEException:
         # Se falhar, usar geemap para autenticação e inicialização
         geemap.ee_initialize()
-
-# Chamar a função de autenticação
-ee_authenticate()
-#__________________________________________________________
 
 # Earth Engine drawing method setup
 def add_ee_layer(self, ee_image_object, vis_params, name):
@@ -183,12 +54,12 @@ folium.Map.add_ee_layer = add_ee_layer
 
 # Defining a function to create and filter a GEE image collection for results
 def satCollection(cloudRate, initialDate, updatedDate, aoi):
-    collection = ee.ImageCollection('COPERNICUS/S2_SR') \
+    collection = ee.ImageCollection('COPERNICUS/S2_SR_HARMONIZED') \
         .filter(ee.Filter.lt("CLOUDY_PIXEL_PERCENTAGE", cloudRate)) \
         .filterDate(initialDate, updatedDate) \
         .filterBounds(aoi)
     
-    # Defining a function to clip the colleciton to the area of interst
+    # Defining a function to clip the collection to the area of interest
     def clipCollection(image):
         return image.clip(aoi).divide(10000)
     # clipping the collection
@@ -234,7 +105,6 @@ def upload_files_proc(upload_files):
 
     return geometry_aoi
 
-
 # Time input processing function
 def date_input_proc(input_date, time_range):
     end_date = input_date
@@ -247,7 +117,7 @@ def date_input_proc(input_date, time_range):
 # Main function to run the Streamlit app
 def main():
     # initiate gee 
-    ee_authenticate(token_name="EARTHENGINE_TOKEN")
+    ee_authenticate()
 
     # sidebar
     with st.sidebar:
@@ -290,7 +160,7 @@ def main():
             ## File upload
                 # User input GeoJSON file
                 st.info("Upload Area Of Interest file:")
-                upload_files = st.file_uploader("Crete a GeoJSON file at: [geojson.io](https://geojson.io/)", accept_multiple_files=True)
+                upload_files = st.file_uploader("Create a GeoJSON file at: [geojson.io](https://geojson.io/)", accept_multiple_files=True)
                 # calling upload files function
                 geometry_aoi = upload_files_proc(upload_files)
             
@@ -356,7 +226,6 @@ def main():
             else:
                 # Default location if no file is uploaded
                 m = folium.Map(location=[36.45, 10.85], tiles=None, zoom_start=4, control_scale=True)
-
 
             ### BASEMAPS - START
             ## Primary basemaps
@@ -465,7 +334,6 @@ def main():
                 m.add_ee_layer(initial_ndvi_classified, ndvi_classified_params, f'Initial Reclassified NDVI: {initial_date}')
                 m.add_ee_layer(updated_ndvi_classified, ndvi_classified_params, f'Updated Reclassified NDVI: {updated_date}')
 
-
             #### Layers section - END
 
             #### Map result display - START
@@ -572,17 +440,16 @@ def main():
 
     st.write("The [Level-2A](https://sentinels.copernicus.eu/web/sentinel/user-guides/sentinel-2-msi/product-types/level-2a) products have undergone atmospheric correction, enhancing the accuracy of surface reflectance values. These images are suitable for various land cover and vegetation analyses, including NDVI calculations.")
 
-
     #### Miscs Info - END
 
-    #### Contributiuon - START
+    #### Contribution - START
     st.header("Contribute to the App")
     con1, con2 = st.columns(2)
     con1.image("https://www.pixenli.com/image/SoL3iZMG")
     con2.markdown("""
         Contributions are welcome from the community to help improve this app! Whether you're interested in fixing bugs 🐞, implementing a new feature 🌟, or enhancing the user experience 🪄, your contributions are valuable.
                   
-        The project is listed under **Hacktoberfest** lalbel for those of you [Hacktoberfest](https://hacktoberfest.com/) enthusiasts! Since the reward for contributing 4 PRs is getting a tree planted in your name through [TreeNation](https://tree-nation.com/), I see it fits the theme of this project.
+        The project is listed under **Hacktoberfest** label for those of you [Hacktoberfest](https://hacktoberfest.com/) enthusiasts! Since the reward for contributing 4 PRs is getting a tree planted in your name through [TreeNation](https://tree-nation.com/), I see it fits the theme of this project.
         """)
     st.markdown("""
         #### Ways to Contribute
@@ -594,17 +461,17 @@ def main():
         - **Code Contributions**: If you're comfortable with coding, you can contribute by submitting pull requests against the `dev` branch of the [Project's GitHub repository](https://github.com/IndigoWizard/NDVI-Viewer/).
     """)
 
-    #### Contributiuon - START
+    #### Contribution - END
 
     #### About App - START
     st.subheader("About:")
-    st.markdown("This project was first developed by me ([IndigoWizard](https://github.com/IndigoWizard)) and [Emmarie-Ahtunan](https://github.com/Emmarie-Ahtunan) as a submission to the **Environemental Data Challenge** of [Global Hack Week: Data](https://ghw.mlh.io/) by [Major League Hacking](https://mlh.io/).<br> I continued developing the base project to make it a feature-complete app. Check the project's GitHub Repo here: [IndigoWizard/NDVI-Viewer](https://github.com/IndigoWizard/NDVI-Viewer)",  unsafe_allow_html=True)
+    st.markdown("This project was first developed by me ([IndigoWizard](https://github.com/IndigoWizard)) and [Emmarie-Ahtunan](https://github.com/Emmarie-Ahtunan) as a submission to the **Environmental Data Challenge** of [Global Hack Week: Data](https://ghw.mlh.io/) by [Major League Hacking](https://mlh.io/).<br> I continued developing the base project to make it a feature-complete app. Check the project's GitHub Repo here: [IndigoWizard/NDVI-Viewer](https://github.com/IndigoWizard/NDVI-Viewer)",  unsafe_allow_html=True)
     st.image("https://www.pixenli.com/image/Hn1xkB-6")
     #### About App - END
 
     #### Credit - START
     st.subheader("Credit:")
-    st.markdown("""The app was developped by [IndigoWizard](https://github.com/IndigoWizard) using; [Streamlit](https://streamlit.io/), [Google Earth Engine](https://github.com/google/earthengine-api) Python API, [geemap](https://github.com/gee-community/geemap), [Folium](https://github.com/python-visualization/folium). Agriculture icons created by <a href="https://www.flaticon.com/free-icons/agriculture" title="agriculture icons">dreamicons - Flaticon</a>""", unsafe_allow_html=True)
+    st.markdown("""The app was developed by [IndigoWizard](https://github.com/IndigoWizard) using; [Streamlit](https://streamlit.io/), [Google Earth Engine](https://github.com/google/earthengine-api) Python API, [geemap](https://github.com/gee-community/geemap), [Folium](https://github.com/python-visualization/folium). Agriculture icons created by <a href="https://www.flaticon.com/free-icons/agriculture" title="agriculture icons">dreamicons - Flaticon</a>""", unsafe_allow_html=True)
     #### Credit - END
     
     ##### Custom Styling
@@ -622,7 +489,6 @@ def main():
         }
     </style>
     """, unsafe_allow_html=True)
- 
 
 # Run the app
 if __name__ == "__main__":
