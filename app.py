@@ -151,10 +151,6 @@ st.markdown(
     #geemap.ee_initialize(token_name=token_name)
 # Autenticação e inicialização do Earth Engine
 #__________________________________________________________
-import ee
-import geemap
-import streamlit as st
-
 # Função de autenticação e inicialização do Earth Engine
 @st.cache_data(persist=True)
 def ee_authenticate():
@@ -167,10 +163,6 @@ def ee_authenticate():
 
 # Chamar a função de autenticação
 ee_authenticate()
-
-# Agora você pode usar a API do Earth Engine conforme necessário
-
-
 #__________________________________________________________
 
 # Earth Engine drawing method setup
