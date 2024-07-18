@@ -137,7 +137,7 @@ def add_ee_layer(self, ee_image_object, vis_params, name):
 folium.Map.add_ee_layer = add_ee_layer
 
 def satCollection(cloudRate, initialDate, updatedDate, aoi):
-    collection = ee.ImageCollection('COPERNICUS/S2_SR') \
+    collection = ee.ImageCollection('COPERNICUS/S2_SR_HARMONIZED') \
         .filter(ee.Filter.lt("CLOUDY_PIXEL_PERCENTAGE", cloudRate)) \
         .filterDate(initialDate, updatedDate) \
         .filterBounds(aoi)
@@ -335,12 +335,12 @@ def main():
         }
 
         if initial_date == updated_date:
-            m.add_ee_layer(updated_tci_image, tci_params, 'Satellite Imagery')
+            m.add_ee_layer(updated_sat_imagery, tci_params, 'Satellite Imagery')
             m.add_ee_layer(updated_ndvi, ndvi_params, 'Raw NDVI')
             m.add_ee_layer(updated_ndvi_classified, ndvi_classified_params, 'Reclassified NDVI')
         else:
-            m.add_ee_layer(initial_tci_image, tci_params, f'Initial Satellite Imagery: {initial_date}')
-            m.add_ee_layer(updated_tci_image, tci_params, f'Updated Satellite Imagery: {updated_date}')
+            m.add_ee_layer(initial_sat_imagery, tci_params, f'Initial Satellite Imagery: {initial_date}')
+            m.add_ee_layer(updated_sat_imagery, tci_params, f'Updated Satellite Imagery: {updated_date}')
             m.add_ee_layer(initial_ndvi, ndvi_params, f'Initial Raw NDVI: {initial_date}')
             m.add_ee_layer(updated_ndvi, ndvi_params, f'Updated Raw NDVI: {updated_date}')
             m.add_ee_layer(initial_ndvi_classified, ndvi_classified_params, f'Initial Reclassified NDVI: {initial_date}')
