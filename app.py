@@ -2,7 +2,6 @@ import streamlit as st
 import ee
 import geemap
 import folium
-from folium import WmsTileLayer
 from streamlit_folium import folium_static
 from datetime import datetime, timedelta
 import json
@@ -338,8 +337,8 @@ def main():
             #### Map result display - START
             # Folium Map Layer Control: we can see and interact with map layers
             folium.LayerControl(collapsed=True).add_to(m)
-            # Display the map
-        submitted = c2.form_submit_button("Generate map")
+
+        submitted = st.form_submit_button("Generate map")
         if submitted:
             with c1:
                 folium_static(m)
