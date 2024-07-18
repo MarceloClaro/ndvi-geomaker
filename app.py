@@ -170,6 +170,7 @@ ee_authenticate()
 
 # Agora você pode usar a API do Earth Engine conforme necessário
 
+
 #__________________________________________________________
 
 # Earth Engine drawing method setup
