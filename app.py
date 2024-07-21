@@ -10,6 +10,12 @@ st.set_page_config(
     page_title="NDVI Viewer",
     page_icon="https://cdn-icons-png.flaticon.com/512/2516/2516640.png",
     layout="wide",
+    initial_sidebar_state="expanded",
+    menu_items={
+        'Get help': "https://github.com/IndigoWizard/NDVI-Viewer",
+        'Report a bug': "https://github.com/IndigoWizard/NDVI-Viewer/issues",
+        'About': "This app was developed by [IndigoWizard](https://github.com/IndigoWizard/NDVI-Viewer) for the purpose of environmental monitoring and geospatial analysis"
+    }
 )
 
 st.markdown(
